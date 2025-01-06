@@ -10,6 +10,6 @@ public class PlaygroundEditorTarget : TargetRules
 		Type = TargetType.Editor;
 		DefaultBuildSettings = BuildSettingsVersion.V5;
 
-		ExtraModuleNames.AddRange( new string[] { "Playground" } );
+		ExtraModuleNames.AddRange( new string[] { "Playground", "PlaygroundEditor" } );
 	}
 }
