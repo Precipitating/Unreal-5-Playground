@@ -3,13 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
-
+#include "ComponentVisualizer.h"
+#include "MainCharacter.h"
 /**
  * 
  */
-class PLAYGROUNDEDITOR_API PlayerVisualizer
+class PLAYGROUNDEDITOR_API FPlayerVisualizer: public FComponentVisualizer
 {
 public:
-	PlayerVisualizer();
-	~PlayerVisualizer();
+	void DrawVisualization(const UActorComponent* Component, const FSceneView* View, FPrimitiveDrawInterface* PDI) override;
 };

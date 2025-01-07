@@ -37,11 +37,15 @@ protected:
 	float playerSpeed = 1.f;
 
 
-public:	
 	// Called every frame
+public:	
 	virtual void Tick(float DeltaTime) override;
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+
+private:
+	friend class FPlayerVisualizer;
 
 };
