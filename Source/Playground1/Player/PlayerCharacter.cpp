@@ -35,22 +35,25 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	// Add input mapping context
-	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
-	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
-		{
-			// Add input context
-			Subsystem->AddMappingContext(InputMap, 0);
-		}
-	}
+	APlayerController* PlayerController = Cast<APlayerController>(Controller);
+	checkf(PlayerController, TEXT("Unable to get PlayerController reference."));
+
+	UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer());
+	checkf(Subsystem, TEXT("Unable to get Subsystem reference."));
+
+	// Add input context
+	Subsystem->AddMappingContext(InputMap, 0);
+
+
 
 	// Bind actions to functions
-	if (UEnhancedInputComponent* Input = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
-	{
-		Input->BindAction(MovementAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Movement);
-		Input->BindAction(JumpAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Jump);
-		Input->BindAction(CameraMovementAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Look);
-	}
+	UEnhancedInputComponent* Input = CastChecked<UEnhancedInputComponent>(PlayerInputComponent);
+
+	checkf(Input, TEXT("Unable to get Input reference."));
+	Input->BindAction(MovementAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Movement);
+	Input->BindAction(JumpAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Jump);
+	Input->BindAction(CameraMovementAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Look);
+
 
 }
 
@@ -60,16 +63,9 @@ void APlayerCharacter::Movement(const FInputActionValue& InputValue)
 
 	if (IsValid(Controller))
 	{
-		// Forward direction
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator Yaw(0, Rotation.Yaw, 0);
-
-		const FVector ForwardDir = FRotationMatrix(Yaw).GetUnitAxis(EAxis::X);
-		const FVector RightDir = FRotationMatrix(Yaw).GetUnitAxis(EAxis::Y);
-
 		// Add Movement
-		AddMovementInput(ForwardDir, InputVector.Y);
-		AddMovementInput(RightDir, InputVector.X);
+		AddMovementInput(GetActorForwardVector(), InputVector.Y);
+		AddMovementInput(GetActorRightVector(), InputVector.X);
 
 	}
 }
