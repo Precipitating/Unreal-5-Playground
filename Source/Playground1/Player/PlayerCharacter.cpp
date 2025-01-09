@@ -9,8 +9,12 @@
 // Sets default values
 APlayerCharacter::APlayerCharacter()
 {
- 	// Set this character to call Ticsk() every frame.  You can turn this off to improve performance if you don't need it.
+ 	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	SetActorTickInterval(0.5f);
+	SetActorTickEnabled(true);
+	
+	// Setup camera.
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Player Camera"));
 	Camera->SetupAttachment(RootComponent);
 	Camera->bUsePawnControlRotation = true;
@@ -35,6 +39,55 @@ void APlayerCharacter::BeginPlay()
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	// Handle stamina reductions and regeneration.
+	// Adjust regen rate depending on action.
+	float CurrentStaminaRegen = StaminaRecoveryFactor;
+
+
+	if (HasJumped)
+	{
+		CurrentStaminaRegen = -JumpCost;
+
+	}
+	else if (HasRan)
+	{
+		CurrentStaminaRegen = -SprintCost;
+	}
+	else if (bIsCrouched)
+	{
+		CurrentStaminaRegen = CrouchRecovery;
+	}
+
+	const float PreviousStamina = CurrentStamina;
+
+	// Ensure no over/undershooting of stamina
+
+	CurrentStamina = FMath::Clamp(CurrentStamina + CurrentStaminaRegen, 0.f, MaxStamina);
+
+	if (CurrentStamina != PreviousStamina)
+	{
+		OnStaminaUpdate.Broadcast(PreviousStamina, CurrentStamina, MaxStamina);
+	}
+
+	HasKicked = false;
+	HasRan = false;
+	HasJumped = false;
+
+
+	// Debug
+	GEngine->AddOnScreenDebugMessage(-1, 0.49f, FColor::Silver,
+		*(FString::Printf(
+			TEXT("Movement - IsCrouched:%d | IsSprinting:%d"), bIsCrouched, IsRunning)));
+	GEngine->AddOnScreenDebugMessage(-1, 0.49f, FColor::Red,
+		*(FString::Printf(
+			TEXT("Health - Current:%d | Maximum:%d"), CurrentHealth, MaxHealth)));
+	GEngine->AddOnScreenDebugMessage(-1, 0.49f, FColor::Green,
+		*(FString::Printf(
+			TEXT("Stamina - Current:%f | Maximum:%f"), CurrentStamina, MaxStamina)));
+
+
+
 
 }
 
@@ -66,7 +119,8 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	Input->BindAction(CameraMovementAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Look);
 	Input->BindAction(CrouchAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Crouch);
 	Input->BindAction(KickAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Kick);
-	Input->BindAction(KickAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Kick);
+	Input->BindAction(SprintAction, ETriggerEvent::Triggered, this, &APlayerCharacter::SetSprint, true);
+	Input->BindAction(SprintAction, ETriggerEvent::Completed, this, &APlayerCharacter::SetSprint, false);
 
 
 }
@@ -84,16 +138,24 @@ int APlayerCharacter::GetMaxHealth()
 
 void APlayerCharacter::UpdateHealth(int Health)
 {
+	int PreviousHealth = CurrentHealth;
+
 	CurrentHealth += Health;
 
 	// Clamp so it doesnt overshoot/undershoot.
 	CurrentHealth = FMath::Clamp(CurrentHealth, -1.f, MaxHealth);
 
+	// Notify listeners if there is a change in health.
+	if (CurrentHealth != PreviousHealth)
+	{
+		OnHealthUpdated.Broadcast(PreviousHealth, CurrentHealth, MaxHealth);
+	}
+
 	// Handle death, if negating health makes it < 0.
 	if (CurrentHealth <= 0)
 	{
-	
-	
+		OnPlayerDied.Broadcast();
+		
 	}
 }
 
@@ -114,7 +176,7 @@ void APlayerCharacter::SetStamina(float Stamina)
 }
 void APlayerCharacter::SetStaminaRecoveryValue(float Recovery)
 {
-	StaminaRecovery = Recovery;
+	StaminaRecoveryFactor = Recovery;
 }
 #pragma endregion
 
@@ -124,12 +186,25 @@ void APlayerCharacter::Movement(const FInputActionValue& InputValue)
 
 	if (IsValid(Controller))
 	{
+		if (IsRunning && CurrentStamina <= 0)
+		{
+			SetSprint(false);
+		}
+
 		// Add Movement
 		AddMovementInput(GetActorForwardVector(), InputVector.Y);
 		AddMovementInput(GetActorRightVector(), InputVector.X);
 
+		if (IsRunning)
+		{
+			HasRan = true;
+		}
+
+
 	}
 }
+
+
 
 void APlayerCharacter::Look(const FInputActionValue& InputValue)
 {
@@ -142,12 +217,18 @@ void APlayerCharacter::Look(const FInputActionValue& InputValue)
 
 	}
 }
-
+#pragma region Player_Actions
 void APlayerCharacter::Jump()
 {
-	if (JumpAction)
+	if (JumpAction && ((CurrentStamina - JumpCost) > 0.f))
 	{
-		ACharacter::Jump();
+		if (!GetCharacterMovement()->IsFalling())
+		{
+			UnCrouch();
+			ACharacter::Jump();
+			HasJumped = true;
+		}
+
 	}
 
 }
@@ -156,7 +237,8 @@ void APlayerCharacter::Crouch()
 {
 	if (CrouchAction)
 	{
-		if (ACharacter::bIsCrouched)
+		SetSprint(false);
+		if (bIsCrouched)
 		{
 			ACharacter::UnCrouch();
 		}
@@ -164,7 +246,7 @@ void APlayerCharacter::Crouch()
 		{
 			ACharacter::Crouch();
 		}
-		
+
 	}
 
 
@@ -172,23 +254,21 @@ void APlayerCharacter::Crouch()
 
 void APlayerCharacter::Kick()
 {
-	if (KickAction)
+	if (KickAction && (CurrentStamina - KickCost) > 0.f)
 	{
+		HasKicked = true;
 		// implement kick action
 	}
 
 }
 
-void APlayerCharacter::Sprint()
+void APlayerCharacter::SetSprint(bool IsSprinting)
 {
-	if (SprintAction)
-	{
-		GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
-	}
-	else
-	{
-		GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
-	}
+	IsRunning = IsSprinting;
+
+	GetCharacterMovement()->MaxWalkSpeed = IsRunning ? SprintSpeed : WalkSpeed;
 }
+
+#pragma endregion
 
 

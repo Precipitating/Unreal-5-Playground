@@ -5,7 +5,25 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
+#include "Delegates/DelegateCombinations.h"
 #include "PlayerCharacter.generated.h"
+
+// Delegate for ints
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FIntStatUpdated,
+											   int32, OldValue,
+											   int32, NewValue,
+											   int32, MaxValue);
+
+// Delegate for when the player dies
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FPlayerIsDead);
+
+// Delegate for when stats based on floats are changed.
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FFloatStatUpdated,
+											   float, OldValue,
+											   float, NewValue,
+											   float, MaxValue);
+
+
 
 UCLASS()
 class PLAYGROUND1_API APlayerCharacter : public ACharacter
@@ -35,9 +53,17 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Player Health")
 	void UpdateHealth(int Health);
 
+	// Called if health updated.
+	UPROPERTY(BlueprintAssignable, Category = "Player Health")
+	FIntStatUpdated OnHealthUpdated;
+
 	// Set the player's max health.
 	UFUNCTION(BlueprintCallable, Category = "Player Health")
 	void SetMaxHealth(int Health);
+
+	// Called if player is dead.
+	UPROPERTY(BlueprintAssignable, Category = "Player Health")
+	FPlayerIsDead OnPlayerDied;
 #pragma endregion
 
 #pragma region Stamina_Functions
@@ -53,6 +79,12 @@ public:
 	// Set player's stamina recovery amount.
 	UFUNCTION(BlueprintCallable, Category = "Player Stamina")
 	void SetStaminaRecoveryValue(float Recovery);
+
+	// Triggered when the player's stamina is updated.
+	UPROPERTY(BlueprintAssignable, Category = "Player Stamina")
+	FFloatStatUpdated OnStaminaUpdate;
+
+
 #pragma endregion
 
 
@@ -95,7 +127,7 @@ protected:
 	void Jump();
 	void Crouch();
 	void Kick();
-	void Sprint();
+	void SetSprint(bool IsSprinting);
 
 private:
 	// Camera
@@ -110,17 +142,22 @@ private:
 	// Speed
 	static constexpr float WalkSpeed   = 600.f;
 	static constexpr float SprintSpeed = WalkSpeed * 2.f;
-	bool IsRunning;
+	bool IsRunning = false;
+	bool HasRan = false;
 
 	// Stamina
-	float				   CurrentStamina  = 100.f;
-	float				   StaminaRecovery = 5.f;
-	static float constexpr MaxStamina	   = 100.f;
+	float				   CurrentStamina		 = MaxStamina;
+	float				   StaminaRecoveryFactor = 1.f;
+	static float constexpr MaxStamina			 = 100.f;
+	static float constexpr CrouchRecovery		 = 4.f;
+	bool HasJumped = false;
 
-
+	// Action stamina cost
 	static constexpr float SprintCost	   = 5.f;
-	static constexpr float JumpCost		   = 10.f;
-	static constexpr float KickCost		   = 15.f;
+	static constexpr float JumpCost		   = 25.f;
+	static constexpr float KickCost		   = 30.f;
+
+	bool HasKicked = false;
 
 
 
