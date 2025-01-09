@@ -3,6 +3,8 @@
 #include "InputMappingContext.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+
 
 // Sets default values
 APlayerCharacter::APlayerCharacter()
@@ -12,13 +14,20 @@ APlayerCharacter::APlayerCharacter()
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Player Camera"));
 	Camera->SetupAttachment(RootComponent);
 	Camera->bUsePawnControlRotation = true;
-
 }
 
 // Called when the game starts or when spawned
 void APlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// enable crouching
+	if (GetMovementComponent())
+	{
+		GetMovementComponent()->GetNavAgentPropertiesRef().bCanCrouch = true;
+	}
+
+
 	
 }
 
@@ -38,10 +47,12 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	APlayerController* PlayerController = Cast<APlayerController>(Controller);
 	checkf(PlayerController, TEXT("Unable to get PlayerController reference."));
 
+	// Get local player subsystem
 	UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer());
 	checkf(Subsystem, TEXT("Unable to get Subsystem reference."));
-
+	
 	// Add input context
+	Subsystem->ClearAllMappings();
 	Subsystem->AddMappingContext(InputMap, 0);
 
 
@@ -53,9 +64,45 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	Input->BindAction(MovementAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Movement);
 	Input->BindAction(JumpAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Jump);
 	Input->BindAction(CameraMovementAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Look);
+	Input->BindAction(CrouchAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Crouch);
+	Input->BindAction(KickAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Kick);
+	Input->BindAction(KickAction, ETriggerEvent::Triggered, this, &APlayerCharacter::Kick);
 
 
 }
+
+#pragma region Health_Functions
+int APlayerCharacter::GetHealth()
+{
+	return 0;
+}
+
+int APlayerCharacter::GetMaxHealth()
+{
+	return 0;
+}
+
+void APlayerCharacter::UpdateHealth(int Health)
+{
+}
+
+void APlayerCharacter::SetMaxHealth(int Health)
+{
+}
+#pragma endregion
+
+#pragma region Stamina_Functions
+float APlayerCharacter::GetStamina()
+{
+	return 0.0f;
+}
+void APlayerCharacter::SetStamina(float Stamina)
+{
+}
+void APlayerCharacter::SetStaminaRecoveryValue(float Recovery)
+{
+}
+#pragma endregion
 
 void APlayerCharacter::Movement(const FInputActionValue& InputValue)
 {
@@ -79,13 +126,55 @@ void APlayerCharacter::Look(const FInputActionValue& InputValue)
 		AddControllerYawInput(InputVector.X);
 		AddControllerPitchInput(InputVector.Y);
 
-
 	}
 }
 
 void APlayerCharacter::Jump()
 {
-	ACharacter::Jump();
+	if (JumpAction)
+	{
+		ACharacter::Jump();
+	}
+
+}
+
+void APlayerCharacter::Crouch()
+{
+	if (CrouchAction)
+	{
+		if (ACharacter::bIsCrouched)
+		{
+			ACharacter::UnCrouch();
+		}
+		else
+		{
+			ACharacter::Crouch();
+		}
+		
+	}
+
+
+}
+
+void APlayerCharacter::Kick()
+{
+	if (KickAction)
+	{
+		// implement kick action
+	}
+
+}
+
+void APlayerCharacter::Sprint()
+{
+	if (SprintAction)
+	{
+		GetCharacterMovement()->MaxWalkSpeed = SprintSpeed;
+	}
+	else
+	{
+		GetCharacterMovement()->MaxWalkSpeed = WalkSpeed;
+	}
 }
 
 
