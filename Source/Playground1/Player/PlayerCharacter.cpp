@@ -186,10 +186,6 @@ void APlayerCharacter::Movement(const FInputActionValue& InputValue)
 
 	if (IsValid(Controller))
 	{
-		if (IsRunning && CurrentStamina <= 0)
-		{
-			SetSprint(false);
-		}
 
 		// Add Movement
 		AddMovementInput(GetActorForwardVector(), InputVector.Y);
@@ -222,13 +218,16 @@ void APlayerCharacter::Jump()
 {
 	if (JumpAction && ((CurrentStamina - JumpCost) > 0.f))
 	{
-		if (!GetCharacterMovement()->IsFalling())
+		if (CanJump())
 		{
-			UnCrouch();
-			ACharacter::Jump();
+			if (bIsCrouched)
+			{
+				UnCrouch();
+			}
+
+			Super::Jump();
 			HasJumped = true;
 		}
-
 	}
 
 }
@@ -264,6 +263,11 @@ void APlayerCharacter::Kick()
 
 void APlayerCharacter::SetSprint(bool IsSprinting)
 {
+	if (IsRunning && CurrentStamina <= 0.f)
+	{
+		IsSprinting = false;
+	}
+
 	IsRunning = IsSprinting;
 
 	GetCharacterMovement()->MaxWalkSpeed = IsRunning ? SprintSpeed : WalkSpeed;
