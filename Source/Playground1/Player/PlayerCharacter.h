@@ -55,21 +55,6 @@ public:
 	void SetStaminaRecoveryValue(float Recovery);
 #pragma endregion
 
-#pragma region Stamina_Functions
-
-	// Return current stamina.
-	UFUNCTION(BlueprintPure, Category = "Player Stamina")
-	float GetStamina();
-
-	// Set player's stamina.
-	UFUNCTION(BlueprintCallable, Category = "Player Stamina")
-	void SetStamina(float Stamina);
-
-	// Set player's stamina recovery amount.
-	UFUNCTION(BlueprintCallable, Category = "Player Stamina")
-	void SetStaminaRecoveryValue(float Recovery);
-#pragma endregion
-
 
 
 
@@ -129,8 +114,9 @@ private:
 
 	// Stamina
 	float				   CurrentStamina  = 100.f;
+	float				   StaminaRecovery = 5.f;
 	static float constexpr MaxStamina	   = 100.f;
-	static float constexpr StaminaRecovery = 5.f;
+
 
 	static constexpr float SprintCost	   = 5.f;
 	static constexpr float JumpCost		   = 10.f;

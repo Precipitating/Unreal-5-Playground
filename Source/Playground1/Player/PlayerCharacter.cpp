@@ -74,33 +74,47 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 #pragma region Health_Functions
 int APlayerCharacter::GetHealth()
 {
-	return 0;
+	return CurrentHealth;
 }
 
 int APlayerCharacter::GetMaxHealth()
 {
-	return 0;
+	return MaxHealth;
 }
 
 void APlayerCharacter::UpdateHealth(int Health)
 {
+	CurrentHealth += Health;
+
+	// Clamp so it doesnt overshoot/undershoot.
+	CurrentHealth = FMath::Clamp(CurrentHealth, -1.f, MaxHealth);
+
+	// Handle death, if negating health makes it < 0.
+	if (CurrentHealth <= 0)
+	{
+	
+	
+	}
 }
 
 void APlayerCharacter::SetMaxHealth(int Health)
 {
+	MaxHealth = Health;
 }
 #pragma endregion
 
 #pragma region Stamina_Functions
 float APlayerCharacter::GetStamina()
 {
-	return 0.0f;
+	return CurrentStamina;
 }
 void APlayerCharacter::SetStamina(float Stamina)
 {
+	CurrentStamina = Stamina;
 }
 void APlayerCharacter::SetStaminaRecoveryValue(float Recovery)
 {
+	StaminaRecovery = Recovery;
 }
 #pragma endregion
 
