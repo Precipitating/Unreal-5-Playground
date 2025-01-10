@@ -180,6 +180,31 @@ void APlayerCharacter::SetStaminaRecoveryValue(float Recovery)
 }
 #pragma endregion
 
+
+#pragma region Action_Getter_Functions
+bool APlayerCharacter::GetJumped()
+{
+	return HasJumped || GetCharacterMovement()->IsFalling();
+}
+
+bool APlayerCharacter::GetWalking()
+{
+	bool IsMoving = ACharacter::GetVelocity().SizeSquared() <= 0.1f;
+
+	return !IsMoving;
+}
+
+bool APlayerCharacter::GetRunning()
+{
+	return IsRunning;
+}
+
+bool APlayerCharacter::GetCrouching()
+{
+	return bIsCrouched;
+}
+#pragma endregion
+
 void APlayerCharacter::Movement(const FInputActionValue& InputValue)
 {
 	FVector2D InputVector = InputValue.Get<FVector2D>();

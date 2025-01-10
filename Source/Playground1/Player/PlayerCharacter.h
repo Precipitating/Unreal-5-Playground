@@ -87,7 +87,16 @@ public:
 
 #pragma endregion
 
-
+#pragma region Action_Getters
+	UFUNCTION(BlueprintPure, Category = "Action Getters")
+	bool GetJumped();
+	UFUNCTION(BlueprintPure, Category = "Action Getters")
+	bool GetWalking();
+	UFUNCTION(BlueprintPure, Category = "Action Getters")
+	bool GetRunning();
+	UFUNCTION(BlueprintPure, Category = "Action Getters")
+	bool GetCrouching();
+# pragma endregion
 
 
 protected:
