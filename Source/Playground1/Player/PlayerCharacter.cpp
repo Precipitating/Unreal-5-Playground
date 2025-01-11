@@ -203,6 +203,7 @@ bool APlayerCharacter::GetCrouching()
 {
 	return bIsCrouched;
 }
+
 #pragma endregion
 
 void APlayerCharacter::Movement(const FInputActionValue& InputValue)
@@ -259,7 +260,7 @@ void APlayerCharacter::Jump()
 
 void APlayerCharacter::Crouch()
 {
-	if (CrouchAction)
+	if (CrouchAction && !GetJumped())
 	{
 		SetSprint(false);
 		if (bIsCrouched)
@@ -288,7 +289,7 @@ void APlayerCharacter::Kick()
 
 void APlayerCharacter::SetSprint(bool IsSprinting)
 {
-	if (IsRunning && CurrentStamina <= 0.f)
+	if ((IsRunning && CurrentStamina <= 0.f) || (CurrentStamina - SprintCost) <= 0.f)
 	{
 		IsSprinting = false;
 	}

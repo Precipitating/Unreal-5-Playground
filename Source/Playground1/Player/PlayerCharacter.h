@@ -149,7 +149,7 @@ private:
 	int					 MaxHealth	    = DefaultHealth;
 
 	// Speed
-	static constexpr float WalkSpeed   = 600.f;
+	static constexpr float WalkSpeed   = 300.f;
 	static constexpr float SprintSpeed = WalkSpeed * 2.f;
 	bool IsRunning = false;
 	bool HasRan = false;
@@ -163,8 +163,8 @@ private:
 
 	// Action stamina cost
 	static constexpr float SprintCost	   = 5.f;
-	static constexpr float JumpCost		   = 25.f;
-	static constexpr float KickCost		   = 30.f;
+	static constexpr float JumpCost		   = 15.f;
+	static constexpr float KickCost		   = 25.f;
 
 	bool HasKicked = false;
 
