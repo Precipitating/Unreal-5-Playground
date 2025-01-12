@@ -59,6 +59,13 @@ void APlayerCharacter::Tick(float DeltaTime)
 		CurrentStaminaRegen = CrouchRecovery;
 	}
 
+	if (HasKicked)
+	{
+		CurrentStaminaRegen -= KickCost;
+
+		
+	}
+
 	const float PreviousStamina = CurrentStamina;
 
 	// Ensure no over/undershooting of stamina
@@ -70,7 +77,6 @@ void APlayerCharacter::Tick(float DeltaTime)
 		OnStaminaUpdate.Broadcast(PreviousStamina, CurrentStamina, MaxStamina);
 	}
 
-	HasKicked = false;
 	HasRan = false;
 	HasJumped = false;
 
@@ -85,6 +91,9 @@ void APlayerCharacter::Tick(float DeltaTime)
 	GEngine->AddOnScreenDebugMessage(-1, 0.49f, FColor::Green,
 		*(FString::Printf(
 			TEXT("Stamina - Current:%f | Maximum:%f"), CurrentStamina, MaxStamina)));
+	GEngine->AddOnScreenDebugMessage(-1, 0.49f, FColor::Green,
+		*(FString::Printf(
+			TEXT("Kicked? - Current:%f"), (int)HasKicked)));
 
 
 
@@ -182,26 +191,36 @@ void APlayerCharacter::SetStaminaRecoveryValue(float Recovery)
 
 
 #pragma region Action_Getter_Functions
-bool APlayerCharacter::GetJumped()
+bool APlayerCharacter::GetJumped() const
 {
 	return HasJumped || GetCharacterMovement()->IsFalling();
 }
 
-bool APlayerCharacter::GetWalking()
+bool APlayerCharacter::GetWalking() const 
 {
 	bool IsMoving = ACharacter::GetVelocity().SizeSquared() <= 0.1f;
 
 	return !IsMoving;
 }
 
-bool APlayerCharacter::GetRunning()
+bool APlayerCharacter::GetRunning() const 
 {
 	return IsRunning;
 }
 
-bool APlayerCharacter::GetCrouching()
+bool APlayerCharacter::GetCrouching() const 
 {
 	return bIsCrouched;
+}
+
+bool APlayerCharacter::GetKicked() const 
+{
+	return HasKicked;
+}
+
+void APlayerCharacter::SetKicked(bool Value)
+{
+	HasKicked = Value;
 }
 
 #pragma endregion
@@ -279,17 +298,18 @@ void APlayerCharacter::Crouch()
 
 void APlayerCharacter::Kick()
 {
-	if (KickAction && (CurrentStamina - KickCost) > 0.f)
+	if (KickAction && (CurrentStamina - KickCost) > 0.f && !HasKicked)
 	{
-		HasKicked = true;
-		// implement kick action
+		PlayAnimMontage(KickMontage);
+		
 	}
 
 }
 
 void APlayerCharacter::SetSprint(bool IsSprinting)
 {
-	if ((IsRunning && CurrentStamina <= 0.f) || (CurrentStamina - SprintCost) <= 0.f)
+	// Do not sprint if we have no stamina, or we are crouching.
+	if ((IsRunning && CurrentStamina <= 0.f) || (CurrentStamina - SprintCost) <= 0.f || GetCrouching())
 	{
 		IsSprinting = false;
 	}

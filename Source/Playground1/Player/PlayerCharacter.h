@@ -87,15 +87,20 @@ public:
 
 #pragma endregion
 
-#pragma region Action_Getters
-	UFUNCTION(BlueprintPure, Category = "Action Getters")
-	bool GetJumped();
-	UFUNCTION(BlueprintPure, Category = "Action Getters")
-	bool GetWalking();
-	UFUNCTION(BlueprintPure, Category = "Action Getters")
-	bool GetRunning();
-	UFUNCTION(BlueprintPure, Category = "Action Getters")
-	bool GetCrouching();
+#pragma region Action_GettersSetters
+	UFUNCTION(BlueprintPure, Category = "Action GettersSetters")
+	bool GetJumped() const;
+	UFUNCTION(BlueprintPure, Category = "Action GettersSetters")
+	bool GetWalking() const;
+	UFUNCTION(BlueprintPure, Category = "Action GettersSetters")
+	bool GetRunning() const;
+	UFUNCTION(BlueprintPure, Category = "Action GettersSetters")
+	bool GetCrouching() const;
+	UFUNCTION(BlueprintPure, Category = "Action GettersSetters")
+	bool GetKicked() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Action GettersSetters")
+	void SetKicked(bool Value);
 # pragma endregion
 
 
@@ -138,10 +143,16 @@ protected:
 	void Kick();
 	void SetSprint(bool IsSprinting);
 
+	// Kick animation montage reference
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Kick Animation")
+	UAnimMontage* KickMontage;
+
 private:
 	// Camera
 	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* Camera;
+
+
 
 	// Health
 	static constexpr int DefaultHealth  = 100;
