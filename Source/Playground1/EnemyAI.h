@@ -37,6 +37,13 @@ private:
 	USkeletalMeshComponent* SkeletalMesh = nullptr;
 	FName RootBone = "pelvis";
 
+	// Stand up animation
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true"))
+	UAnimMontage* StandUpAnimation;
+
+	// Timer handle to manage the timer
+	FTimerHandle TimerHandle;
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

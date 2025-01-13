@@ -17,7 +17,7 @@ AEnemyAI::AEnemyAI()
 void AEnemyAI::StartRagdoll()
 {
 	// Disable collision
-	SkeletalMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	SkeletalMesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 
 	// Disable all collision and movement 
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
@@ -30,18 +30,44 @@ void AEnemyAI::StartRagdoll()
 }
 void AEnemyAI::StopRagdoll()
 {
+	// Reverse everything from StartRagdoll
+	SkeletalMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
+	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Falling);
+	SkeletalMesh->SetCollisionObjectType(ECollisionChannel::ECC_Pawn);
+	SkeletalMesh->SetCollisionEnabled(ECollisionEnabled::Type::QueryOnly);
+	SkeletalMesh->SetAllBodiesBelowSimulatePhysics(RootBone, false);
+
+	SkeletalMesh->GetAnimInstance()->SavePoseSnapshot("Ragdoll");
+	
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &AEnemyAI::StopRagdoll, SkeletalMesh->GetAnimInstance()->Montage_Play(StandUpAnimation), false);
+	
 }
 void AEnemyAI::EndRagdoll()
 {
+	// allow movement 
 }
 void AEnemyAI::UpdateRagdoll()
 {
-	auto SocketTransform = SkeletalMesh->GetSocketTransform(RootBone);
+	FTransform SocketTransform = SkeletalMesh->GetSocketTransform(RootBone);
 	FRotator AdjustedRotation = GetActorRotation();
 	AdjustedRotation.Roll = SocketTransform.GetRotation().Z;
 
-	SetActorLocation(SocketTransform.GetLocation() + FVector(0, 0, 90));
+	if (AdjustedRotation.Roll < 0)
+	{
+		AdjustedRotation.Roll -= 180.f;
+	}
+
 	SetActorRotation(AdjustedRotation);
+	SetActorLocation(SocketTransform.GetLocation() + FVector(0, 0, 90));
+
+
+	// Set ragdoll stiffness
+	double RagdollVelocityLength = GetRagdollVelocity().Length();
+	float Spring = FMath::GetMappedRangeValueClamped(FVector2D(0.f, 500.f), FVector2D(500.f, 5000.f), RagdollVelocityLength);
+
+	SkeletalMesh->SetAllMotorsAngularDriveParams(Spring, 0.f, 0.f);
+
 
 	
 }
