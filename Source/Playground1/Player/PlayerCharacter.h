@@ -149,8 +149,12 @@ protected:
 
 private:
 	// Camera
-	UPROPERTY(VisibleAnywhere, meta = (AllowPrivateAccess = "true"))
-	class UCameraComponent* Camera;
+	UPROPERTY(VisibleDefaultsOnly, meta = (AllowPrivateAccess = "true"))
+	class UCameraComponent* Camera = nullptr;
+	FVector CameraLocation =		 FVector(0.f, 30.f, 0.f);
+
+	UPROPERTY(VisibleDefaultsOnly, meta = (AllowPrivateAccess = "true"))
+	class USpringArmComponent* SpringArm = nullptr;
 
 
 

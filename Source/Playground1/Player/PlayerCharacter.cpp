@@ -1,5 +1,6 @@
 #include "Playground1/Player/PlayerCharacter.h"
 #include "Camera/CameraComponent.h"
+#include "GameFramework/SpringArmComponent.h"
 #include "InputMappingContext.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
@@ -14,9 +15,18 @@ APlayerCharacter::APlayerCharacter()
 	SetActorTickInterval(0.5f);
 	SetActorTickEnabled(true);
 	
-	// Setup camera.
+	// Setup spring arm.
+	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
+	SpringArm->SetupAttachment(GetMesh(), FName("head"));
+	SpringArm->TargetArmLength = 0.f;
+	SpringArm->bInheritPitch = true;
+	SpringArm->bInheritYaw = true;
+	SpringArm->bInheritRoll = false;
+
+	// Setup camera
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Player Camera"));
-	Camera->SetupAttachment(RootComponent);
+	Camera->SetupAttachment(SpringArm);
+	Camera->SetWorldLocation(CameraLocation);
 	Camera->bUsePawnControlRotation = true;
 }
 
