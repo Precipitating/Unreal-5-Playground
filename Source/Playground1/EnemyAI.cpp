@@ -3,7 +3,6 @@
 
 #include "EnemyAI.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "TimerManager.h"
 
 // Sets default values
 AEnemyAI::AEnemyAI()
@@ -17,127 +16,81 @@ AEnemyAI::AEnemyAI()
 #pragma region Ragdoll
 void AEnemyAI::StartRagdoll()
 {
-	if (!IsRagdoll)
-	{
-		IsRagdoll = true;
-		SkeletalMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		SkeletalMesh->SetAllBodiesBelowSimulatePhysics(RootBone, true);
-		GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
-		GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &AEnemyAI::GetIsRagdollFacingDown, 0.5f, true);
-	}
+	// Disable collision
+	SkeletalMesh->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 
+	// Disable all collision and movement 
+	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_None);
+	SkeletalMesh->SetCollisionObjectType(ECollisionChannel::ECC_PhysicsBody);
+	SkeletalMesh->SetCollisionEnabled(ECollisionEnabled::Type::QueryAndPhysics);
+	SkeletalMesh->SetAllBodiesBelowSimulatePhysics(RootBone, true);
+
+	UpdateRagdoll();
 
 }
+void AEnemyAI::StopRagdoll()
+{
+	// Reverse everything from StartRagdoll
+	SkeletalMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 
+	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Falling);
+	SkeletalMesh->SetCollisionObjectType(ECollisionChannel::ECC_Pawn);
+	SkeletalMesh->SetCollisionEnabled(ECollisionEnabled::Type::QueryOnly);
+	SkeletalMesh->SetAllBodiesBelowSimulatePhysics(RootBone, false);
+
+	SkeletalMesh->GetAnimInstance()->SavePoseSnapshot("Ragdoll");
+	
+	GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &AEnemyAI::StopRagdoll, SkeletalMesh->GetAnimInstance()->Montage_Play(StandUpAnimation), false);
+	
+}
 void AEnemyAI::EndRagdoll()
 {
-	if (IsRagdoll)
-	{
-		IsRagdoll = false;
-		SkeletalMesh->AttachToComponent(GetCapsuleComponent(), 
-			FAttachmentTransformRules(
-			EAttachmentRule::SnapToTarget,
-			EAttachmentRule::SnapToTarget,
-			EAttachmentRule::SnapToTarget,
-				true));
-		SkeletalMesh->SetRelativeLocationAndRotation(FVector(0.f, 0.f, 80.f), FRotator(0.f, 0.f, -90.f));
-		SkeletalMesh->SetSimulatePhysics(false);
-
-		if (IsFallBack)
-		{
-			PlayAnimMontage(StandUpDownAnimation);
-		}
-		else
-		{
-			FRotator NewZ = SkeletalMesh->GetSocketRotation("pelvis") + FRotator(0, 0, 180);
-			GetCapsuleComponent()->SetWorldRotation(NewZ);
-			PlayAnimMontage(StandUpAnimation);
-		}
-
-		StandUpTimeline.ReverseFromEnd();
-	}
-
-
+	// allow movement 
 }
 void AEnemyAI::UpdateRagdoll()
 {
+	FTransform SocketTransform = SkeletalMesh->GetSocketTransform(RootBone);
+	FRotator AdjustedRotation = GetActorRotation();
+	AdjustedRotation.Roll = SocketTransform.GetRotation().Z;
 
-}
-void AEnemyAI::CharacterStanding()
-{
-	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+	if (AdjustedRotation.Roll < 0)
+	{
+		AdjustedRotation.Roll -= 180.f;
+	}
 
+	SetActorRotation(AdjustedRotation);
+	SetActorLocation(SocketTransform.GetLocation() + FVector(0, 0, 90));
+
+
+	// Set ragdoll stiffness
+	double RagdollVelocityLength = GetRagdollVelocity().Length();
+	float Spring = FMath::GetMappedRangeValueClamped(FVector2D(0.f, 500.f), FVector2D(500.f, 5000.f), RagdollVelocityLength);
+
+	SkeletalMesh->SetAllMotorsAngularDriveParams(Spring, 0.f, 0.f);
+
+
+	
 }
 bool AEnemyAI::GetIsRagdoll()
 {
-	return IsRagdoll;
+	return IsValid(SkeletalMesh) ? SkeletalMesh->IsSimulatingPhysics(RootBone) : false;
 
 }
 
-void AEnemyAI::GetIsRagdollFacingDown()
+FVector AEnemyAI::GetRagdollVelocity()
 {
-	// Get raycast to floor so we dont clip through ground
-	FRotator Start = SkeletalMesh->GetSocketRotation("pelvis");
-	FVector RightVec = UKismetMathLibrary::GetRightVector(Start);
-	double DotProd = UKismetMathLibrary::Dot_VectorVector(RightVec, FVector(0, 0, 1));
-	bool StoppedMoving = UKismetMathLibrary::Vector_IsNearlyZero(SkeletalMesh->GetPhysicsLinearVelocity(), 5.f);
 
-	if (StoppedMoving)
-	{
-		// Character facing up
-		if (DotProd > 0)
-		{
-			IsFallBack = false;
-		}
-		else
-		{
-			IsFallBack = true;
-		}
+	return IsValid(SkeletalMesh) ? SkeletalMesh->GetBoneLinearVelocity(RootBone) : FVector();
 
-		TimerHandle.Invalidate();
-
-		EndRagdoll();
-	}
-
-
-}
-
-
-void AEnemyAI::StandUpUpdate(float Alpha)
-{
-	SkeletalMesh->SetAllBodiesBelowPhysicsBlendWeight(FName("pelvis"), Alpha);
-
-}
-
-void AEnemyAI::StandUpFinished()
-{
-	SkeletalMesh->SetSimulatePhysics(false);
 }
 #pragma endregion
-
-
 
 // Called when the game starts or when spawned
 void AEnemyAI::BeginPlay()
 {
 	Super::BeginPlay();
-
-	FOnTimelineFloat StandUpdate;
-	StandUpdate.BindUFunction(this, FName("StandUpUpdate"));
-
-	FOnTimelineEvent FinishedStandUp;
-	StandUpdate.BindUFunction(this, FName("StandUpFinished"));
-
-	StandUpTimeline.AddInterpFloat(StandUpCurve, StandUpdate);
-	StandUpTimeline.SetTimelineFinishedFunc(FinishedStandUp);
+	
 }
-
-void AEnemyAI::EndPlay(const EEndPlayReason::Type EndPlayReason)
-{
-	GetWorld()->GetTimerManager().ClearTimer(TimerHandle);
-
-}
-
 
 // Called every frame
 void AEnemyAI::Tick(float DeltaTime)
@@ -146,22 +99,7 @@ void AEnemyAI::Tick(float DeltaTime)
 
 	if (GetIsRagdoll())
 	{
-		// get raycast to floor so we dont clip through ground
-		FVector Start = SkeletalMesh->GetSocketLocation("pelvis");
-		FVector End = SkeletalMesh->GetSocketLocation("pelvis") + (FVector(0, 0, -1.f) * 90.f);
-		FHitResult Out;
-		bool result =  GetWorld()->LineTraceSingleByChannel(Out, Start, End, ECollisionChannel::ECC_Visibility);
-
-		if (result)
-		{
-			GetCapsuleComponent()->SetWorldLocation(Out.Location + FVector(0, 0, 90.f));
-		}
-		else
-		{
-			GetCapsuleComponent()->SetWorldLocation(Start);
-		}
-
-
+		UpdateRagdoll();
 	}
 
 }

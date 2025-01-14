@@ -4,8 +4,6 @@
 #include "InputMappingContext.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
-#include "Playground1/EnemyAI.h"
-
 #include "GameFramework/CharacterMovementComponent.h"
 
 
@@ -29,15 +27,7 @@ APlayerCharacter::APlayerCharacter()
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Player Camera"));
 	Camera->SetupAttachment(SpringArm);
 	Camera->SetWorldLocation(CameraLocation);
-	Camera->bUsePawnControlRotation = true; 
-
-	// Setup Leg Collider
-	LegCollider = CreateDefaultSubobject<USphereComponent>(TEXT("LegCollider"));
-	LegCollider->SetupAttachment(GetMesh(), FName("ball_l"));
-	LegCollider->SetSphereRadius(15.f);
-	LegCollider->SetWorldLocation(FVector(0.35f, 6.f, 4.f));
-	LegCollider->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	
+	Camera->bUsePawnControlRotation = true;
 }
 
 // Called when the game starts or when spawned
@@ -51,11 +41,9 @@ void APlayerCharacter::BeginPlay()
 		GetMovementComponent()->GetNavAgentPropertiesRef().bCanCrouch = true;
 	}
 
-	LegCollider->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::BeginKickOverlap);
 
 	
 }
-
 
 // Called every frame
 void APlayerCharacter::Tick(float DeltaTime)
@@ -113,6 +101,9 @@ void APlayerCharacter::Tick(float DeltaTime)
 	GEngine->AddOnScreenDebugMessage(-1, 0.49f, FColor::Green,
 		*(FString::Printf(
 			TEXT("Stamina - Current:%f | Maximum:%f"), CurrentStamina, MaxStamina)));
+	GEngine->AddOnScreenDebugMessage(-1, 0.49f, FColor::Green,
+		*(FString::Printf(
+			TEXT("Kicked? - Current:%f"), (int)HasKicked)));
 
 
 
@@ -314,7 +305,7 @@ void APlayerCharacter::Crouch()
 
 
 }
-#pragma region Kick
+
 void APlayerCharacter::Kick()
 {
 	if (KickAction && (CurrentStamina - KickCost) > 0.f && !HasKicked)
@@ -325,27 +316,6 @@ void APlayerCharacter::Kick()
 
 }
 
-void APlayerCharacter::BeginKickOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	// Make sure it's not itself.
-	if (OtherActor && OtherActor == this) { return; }
-
-
-	// Handle kick if it overlaps a capsule component.
-	AEnemyAI* Enemy = Cast<AEnemyAI>(OtherActor);
-	if (HasKicked && Enemy)
-	{
-		if (!Enemy->GetIsRagdoll())
-		{
-			Enemy->StartRagdoll();
-
-		}
-
-	}
-
-
-}
-#pragma endregion
 void APlayerCharacter::SetSprint(bool IsSprinting)
 {
 	// Do not sprint if we have no stamina, or we are crouching.
