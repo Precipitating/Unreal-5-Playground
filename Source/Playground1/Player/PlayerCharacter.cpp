@@ -28,6 +28,14 @@ APlayerCharacter::APlayerCharacter()
 	Camera->SetupAttachment(SpringArm);
 	Camera->SetWorldLocation(CameraLocation);
 	Camera->bUsePawnControlRotation = true;
+
+	// Setup Leg Collider
+	LegCollider = CreateDefaultSubobject<USphereComponent>(TEXT("LegCollider"));
+	LegCollider->SetupAttachment(GetMesh(), FName("ball_l"));
+	LegCollider->SetSphereRadius(15.f);
+	LegCollider->SetWorldLocation(FVector(0.35f, 6.f, 4.f));
+	LegCollider->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
 }
 
 // Called when the game starts or when spawned
@@ -40,6 +48,8 @@ void APlayerCharacter::BeginPlay()
 	{
 		GetMovementComponent()->GetNavAgentPropertiesRef().bCanCrouch = true;
 	}
+
+	LegCollider->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::BeginKickOverlap);
 
 
 	
@@ -101,9 +111,6 @@ void APlayerCharacter::Tick(float DeltaTime)
 	GEngine->AddOnScreenDebugMessage(-1, 0.49f, FColor::Green,
 		*(FString::Printf(
 			TEXT("Stamina - Current:%f | Maximum:%f"), CurrentStamina, MaxStamina)));
-	GEngine->AddOnScreenDebugMessage(-1, 0.49f, FColor::Green,
-		*(FString::Printf(
-			TEXT("Kicked? - Current:%f"), (int)HasKicked)));
 
 
 
@@ -313,6 +320,29 @@ void APlayerCharacter::Kick()
 		PlayAnimMontage(KickMontage);
 		
 	}
+
+}
+
+void APlayerCharacter::BeginKickOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	// Make sure it's not itself.
+	if (OtherActor && OtherActor == this) { return; }
+
+	// Handle kick if it overlaps a capsule component.
+	if (HasKicked)
+	{
+		UFunction* RagdollBeginEvent = OtherActor->FindFunction(TEXT("RagdollBegin"));
+		if (RagdollBeginEvent)
+		{
+			OtherActor->ProcessEvent(RagdollBeginEvent, nullptr);
+		}
+
+
+
+
+
+	}
+
 
 }
 

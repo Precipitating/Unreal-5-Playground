@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
 #include "Delegates/DelegateCombinations.h"
+#include "Components/SphereComponent.h"
 #include "PlayerCharacter.generated.h"
 
 // Delegate for ints
@@ -109,6 +110,15 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+	// On overlap (kick)
+	UFUNCTION()
+	void BeginKickOverlap(UPrimitiveComponent* OverlappedComp,
+		AActor* OtherActor,
+		UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex,
+		bool bFromSweep,
+		const FHitResult& SweepResult);
+
 #pragma region Inputs
 
 	// Input
@@ -156,7 +166,8 @@ private:
 	UPROPERTY(VisibleDefaultsOnly, meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* SpringArm = nullptr;
 
-
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	USphereComponent* LegCollider = nullptr;
 
 	// Health
 	static constexpr int DefaultHealth  = 100;
