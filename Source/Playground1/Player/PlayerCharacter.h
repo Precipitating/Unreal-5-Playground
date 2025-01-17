@@ -102,8 +102,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Action GettersSetters")
 	void SetKicked(bool Value);
-# pragma endregion
 
+# pragma endregion
 
 protected:
 
@@ -193,6 +193,20 @@ private:
 	static constexpr float KickCost		   = 20.f;
 
 	bool HasKicked = false;
+
+	// IK
+	bool LeftHandHitWall;
+	FVector LeftHandHitLocation;
+	FName LeftHandSocket = "upperarm_lSocket";
+
+	bool RightHandHitWall;
+	FVector RightHandHitLocation;
+	FName RightHandSocket = "upperarm_rSocket";
+
+
+	// Cached components
+	USkeletalMeshComponent* Mesh = nullptr;
+
 
 
 

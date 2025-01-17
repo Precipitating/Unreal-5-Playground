@@ -12,8 +12,9 @@ APlayerCharacter::APlayerCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	SetActorTickInterval(0.5f);
-	SetActorTickEnabled(true);
+	//SetActorTickInterval(0.5f);
+	//SetActorTickEnabled(true);
+	SetTickGroup(ETickingGroup::TG_PostUpdateWork);
 	
 	// Setup spring arm.
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
@@ -51,6 +52,7 @@ void APlayerCharacter::BeginPlay()
 
 	LegCollider->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::BeginKickOverlap);
 
+	Mesh = GetMesh();
 
 	
 }
@@ -67,12 +69,12 @@ void APlayerCharacter::Tick(float DeltaTime)
 
 	if (HasJumped)
 	{
-		CurrentStaminaRegen = -JumpCost;
+		CurrentStaminaRegen = -JumpCost ;
 
 	}
 	else if (HasRan)
 	{
-		CurrentStaminaRegen = -SprintCost;
+		CurrentStaminaRegen = -SprintCost * DeltaTime;
 	}
 	else if (bIsCrouched)
 	{
@@ -99,7 +101,6 @@ void APlayerCharacter::Tick(float DeltaTime)
 
 	HasRan = false;
 	HasJumped = false;
-
 
 	// Debug
 	GEngine->AddOnScreenDebugMessage(-1, 0.49f, FColor::Silver,
@@ -239,6 +240,7 @@ void APlayerCharacter::SetKicked(bool Value)
 {
 	HasKicked = Value;
 }
+
 
 #pragma endregion
 
