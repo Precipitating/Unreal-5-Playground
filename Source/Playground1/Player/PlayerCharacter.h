@@ -25,7 +25,6 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FFloatStatUpdated,
 											   float, MaxValue);
 
 
-
 UCLASS()
 class PLAYGROUND1_API APlayerCharacter : public ACharacter
 {
@@ -41,31 +40,6 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-#pragma region Health_Functions
-	// Return player's health.
-	UFUNCTION(BlueprintPure, Category= "Player Health")
-	int GetHealth();
-
-	// Return the player's max health.
-	UFUNCTION(BlueprintPure, Category = "Player Health")
-	int GetMaxHealth();
-
-	// Increase/Decrease player's health.
-	UFUNCTION(BlueprintCallable, Category = "Player Health")
-	void UpdateHealth(int Health);
-
-	// Called if health updated.
-	UPROPERTY(BlueprintAssignable, Category = "Player Health")
-	FIntStatUpdated OnHealthUpdated;
-
-	// Set the player's max health.
-	UFUNCTION(BlueprintCallable, Category = "Player Health")
-	void SetMaxHealth(int Health);
-
-	// Called if player is dead.
-	UPROPERTY(BlueprintAssignable, Category = "Player Health")
-	FPlayerIsDead OnPlayerDied;
-#pragma endregion
 
 #pragma region Stamina_Functions
 
@@ -111,7 +85,6 @@ protected:
 	virtual void BeginPlay() override;
 
 	// On overlap (kick)
-	UFUNCTION()
 	void BeginKickOverlap(UPrimitiveComponent* OverlappedComp,
 		AActor* OtherActor,
 		UPrimitiveComponent* OtherComp,
@@ -143,6 +116,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Input")
 	class UInputAction* SprintAction;
 
+	UPROPERTY(EditAnywhere, Category = "Input")
+	class UInputAction* AttackAction;
+
 #pragma endregion
 
 	// Player Actions
@@ -168,11 +144,6 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	USphereComponent* LegCollider = nullptr;
-
-	// Health
-	static constexpr int DefaultHealth  = 100;
-	int					 CurrentHealth  = DefaultHealth;
-	int					 MaxHealth	    = DefaultHealth;
 
 	// Speed
 	static constexpr float WalkSpeed   = 300.f;

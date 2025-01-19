@@ -35,7 +35,7 @@ APlayerCharacter::APlayerCharacter()
 	LegCollider->SetupAttachment(GetMesh(), FName("ball_l"));
 	LegCollider->SetSphereRadius(15.f);
 	LegCollider->SetWorldLocation(FVector(0.35f, 6.f, 4.f));
-	LegCollider->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	LegCollider->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 }
 
@@ -50,7 +50,7 @@ void APlayerCharacter::BeginPlay()
 		GetMovementComponent()->GetNavAgentPropertiesRef().bCanCrouch = true;
 	}
 
-	LegCollider->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::BeginKickOverlap);
+	//LegCollider->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::BeginKickOverlap);
 
 	Mesh = GetMesh();
 
@@ -106,9 +106,6 @@ void APlayerCharacter::Tick(float DeltaTime)
 	//GEngine->AddOnScreenDebugMessage(-1, 0.49f, FColor::Silver,
 	//	*(FString::Printf(
 	//		TEXT("Movement - IsCrouched:%d | IsSprinting:%d"), bIsCrouched, IsRunning)));
-	//GEngine->AddOnScreenDebugMessage(-1, 0.49f, FColor::Red,
-	//	*(FString::Printf(
-	//		TEXT("Health - Current:%d | Maximum:%d"), CurrentHealth, MaxHealth)));
 	//GEngine->AddOnScreenDebugMessage(-1, 0.49f, FColor::Green,
 	//	*(FString::Printf(
 	//		TEXT("Stamina - Current:%f | Maximum:%f"), CurrentStamina, MaxStamina)));
@@ -152,45 +149,6 @@ void APlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 }
 
-#pragma region Health_Functions
-int APlayerCharacter::GetHealth()
-{
-	return CurrentHealth;
-}
-
-int APlayerCharacter::GetMaxHealth()
-{
-	return MaxHealth;
-}
-
-void APlayerCharacter::UpdateHealth(int Health)
-{
-	int PreviousHealth = CurrentHealth;
-
-	CurrentHealth += Health;
-
-	// Clamp so it doesnt overshoot/undershoot.
-	CurrentHealth = FMath::Clamp(CurrentHealth, -1.f, MaxHealth);
-
-	// Notify listeners if there is a change in health.
-	if (CurrentHealth != PreviousHealth)
-	{
-		OnHealthUpdated.Broadcast(PreviousHealth, CurrentHealth, MaxHealth);
-	}
-
-	// Handle death, if negating health makes it < 0.
-	if (CurrentHealth <= 0)
-	{
-		OnPlayerDied.Broadcast();
-		
-	}
-}
-
-void APlayerCharacter::SetMaxHealth(int Health)
-{
-	MaxHealth = Health;
-}
-#pragma endregion
 
 #pragma region Stamina_Functions
 float APlayerCharacter::GetStamina()
@@ -325,28 +283,28 @@ void APlayerCharacter::Kick()
 
 }
 
-void APlayerCharacter::BeginKickOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	// Make sure it's not itself.
-	if (OtherActor && OtherActor == this) { return; }
-
-	// Handle kick if it overlaps a capsule component.
-	if (HasKicked)
-	{
-		UFunction* RagdollBeginEvent = OtherActor->FindFunction(TEXT("RagdollBegin"));
-		if (RagdollBeginEvent)
-		{
-			OtherActor->ProcessEvent(RagdollBeginEvent, nullptr);
-		}
-
-
-
-
-
-	}
-
-
-}
+//void APlayerCharacter::BeginKickOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+//{
+//	// Make sure it's not itself.
+//	if (OtherActor && OtherActor == this) { return; }
+//
+//	// Handle kick if it overlaps a capsule component.
+//	if (HasKicked)
+//	{
+//		UFunction* RagdollBeginEvent = OtherActor->FindFunction(TEXT("RagdollBegin"));
+//		if (RagdollBeginEvent)
+//		{
+//			OtherActor->ProcessEvent(RagdollBeginEvent, nullptr);
+//		}
+//
+//
+//
+//
+//
+//	}
+//
+//
+//}
 
 void APlayerCharacter::SetSprint(bool IsSprinting)
 {
@@ -360,6 +318,8 @@ void APlayerCharacter::SetSprint(bool IsSprinting)
 
 	GetCharacterMovement()->MaxWalkSpeed = IsRunning ? SprintSpeed : WalkSpeed;
 }
+
+
 
 #pragma endregion
 
