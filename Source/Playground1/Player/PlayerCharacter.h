@@ -55,6 +55,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Player Stamina")
 	void SetStaminaRecoveryValue(float Recovery);
 
+	UFUNCTION(BlueprintCallable, Category = "Player Stamina")
+	void RegenStamina();
+
 	// Triggered when the player's stamina is updated.
 	UPROPERTY(BlueprintAssignable, Category = "Player Stamina")
 	FFloatStatUpdated OnStaminaUpdate;
@@ -83,6 +86,7 @@ protected:
 
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	// On overlap (kick)
 	void BeginKickOverlap(UPrimitiveComponent* OverlappedComp,
@@ -142,9 +146,6 @@ private:
 	UPROPERTY(VisibleDefaultsOnly, meta = (AllowPrivateAccess = "true"))
 	class USpringArmComponent* SpringArm = nullptr;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
-	USphereComponent* LegCollider = nullptr;
-
 	// Speed
 	static constexpr float WalkSpeed   = 300.f;
 	static constexpr float SprintSpeed = WalkSpeed * 2.f;
@@ -153,30 +154,25 @@ private:
 
 	// Stamina
 	float				   CurrentStamina		 = MaxStamina;
-	float				   StaminaRecoveryFactor = 3.f;
+	float				   StaminaRecoveryFactor = 5.f;
 	static float constexpr MaxStamina			 = 100.f;
-	static float constexpr CrouchRecovery		 = 4.f;
-	bool HasJumped = false;
+	static float constexpr CrouchRecovery		 = 10.f;
+	bool				   HasJumped			 = false;
+	float                  StaminaRegenDelay	 = 1.f;
+	FTimerHandle		   StaminaTimerHandle;
 
 	// Action stamina cost
-	static constexpr float SprintCost	   = 2.f;
-	static constexpr float JumpCost		   = 15.f;
-	static constexpr float KickCost		   = 20.f;
-
+	static constexpr float SprintCost	   = 5.f;
+	static constexpr float JumpCost		   = 25.f;
+	static constexpr float KickCost		   = 30.f;
 	bool HasKicked = false;
 
-	// IK
-	bool LeftHandHitWall;
-	FVector LeftHandHitLocation;
-	FName LeftHandSocket = "upperarm_lSocket";
 
-	bool RightHandHitWall;
-	FVector RightHandHitLocation;
-	FName RightHandSocket = "upperarm_rSocket";
 
 
 	// Cached components
 	USkeletalMeshComponent* Mesh = nullptr;
+	UFunction* KickEvent = nullptr;
 
 
 

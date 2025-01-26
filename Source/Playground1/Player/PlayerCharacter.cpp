@@ -30,12 +30,6 @@ APlayerCharacter::APlayerCharacter()
 	Camera->SetWorldLocation(CameraLocation);
 	Camera->bUsePawnControlRotation = true;
 
-	// Setup Leg Collider
-	LegCollider = CreateDefaultSubobject<USphereComponent>(TEXT("LegCollider"));
-	LegCollider->SetupAttachment(GetMesh(), FName("ball_l"));
-	LegCollider->SetSphereRadius(15.f);
-	LegCollider->SetWorldLocation(FVector(0.35f, 6.f, 4.f));
-	LegCollider->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 }
 
@@ -53,8 +47,20 @@ void APlayerCharacter::BeginPlay()
 	//LegCollider->OnComponentBeginOverlap.AddDynamic(this, &APlayerCharacter::BeginKickOverlap);
 
 	Mesh = GetMesh();
+	KickEvent = this->FindFunction(FName("Kick"));
 
-	
+	GetWorld()->GetTimerManager().SetTimer(StaminaTimerHandle, this, &APlayerCharacter::RegenStamina, StaminaRegenDelay, true);
+}
+
+void APlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	// Ensure the fuze timer is cleared by using the timer handle
+	GetWorld()->GetTimerManager().ClearTimer(StaminaTimerHandle);
+
+	// Alternatively you can clear ALL timers that belong to this (Actor) instance.
+	GetWorld()->GetTimerManager().ClearAllTimersForObject(this);
 }
 
 // Called every frame
@@ -62,37 +68,17 @@ void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	// Handle stamina reductions and regeneration.
-	// Adjust regen rate depending on action.
-	float CurrentStaminaRegen = StaminaRecoveryFactor;
-
+	const float PreviousStamina = CurrentStamina;
 
 	if (HasJumped)
 	{
-		CurrentStaminaRegen = -JumpCost ;
+		CurrentStamina -= JumpCost;
 
 	}
 	else if (HasRan)
 	{
-		CurrentStaminaRegen = -SprintCost * DeltaTime;
+		CurrentStamina -= SprintCost * DeltaTime;
 	}
-	else if (bIsCrouched)
-	{
-		CurrentStaminaRegen = CrouchRecovery;
-	}
-
-	if (HasKicked)
-	{
-		CurrentStaminaRegen -= KickCost;
-
-		
-	}
-
-	const float PreviousStamina = CurrentStamina;
-
-	// Ensure no over/undershooting of stamina
-
-	CurrentStamina = FMath::Clamp(CurrentStamina + CurrentStaminaRegen, 0.f, MaxStamina);
 
 	if (CurrentStamina != PreviousStamina)
 	{
@@ -102,13 +88,13 @@ void APlayerCharacter::Tick(float DeltaTime)
 	HasRan = false;
 	HasJumped = false;
 
-	//// Debug
-	//GEngine->AddOnScreenDebugMessage(-1, 0.49f, FColor::Silver,
-	//	*(FString::Printf(
-	//		TEXT("Movement - IsCrouched:%d | IsSprinting:%d"), bIsCrouched, IsRunning)));
-	//GEngine->AddOnScreenDebugMessage(-1, 0.49f, FColor::Green,
-	//	*(FString::Printf(
-	//		TEXT("Stamina - Current:%f | Maximum:%f"), CurrentStamina, MaxStamina)));
+	// Debug
+	GEngine->AddOnScreenDebugMessage(-1, 0.49f, FColor::Silver,
+		*(FString::Printf(
+			TEXT("Movement - IsCrouched:%d | IsSprinting:%d"), bIsCrouched, IsRunning)));
+	GEngine->AddOnScreenDebugMessage(-1, 0.49f, FColor::Green,
+		*(FString::Printf(
+			TEXT("Stamina - Current:%f | Maximum:%f"), CurrentStamina, MaxStamina)));
 
 
 
@@ -162,6 +148,20 @@ void APlayerCharacter::SetStamina(float Stamina)
 void APlayerCharacter::SetStaminaRecoveryValue(float Recovery)
 {
 	StaminaRecoveryFactor = Recovery;
+}
+void APlayerCharacter::RegenStamina()
+{
+	if (bIsCrouched)
+	{
+		CurrentStamina += CrouchRecovery;
+	}
+	else
+	{
+		CurrentStamina += StaminaRecoveryFactor;
+	}
+
+	// Ensure no over/undershooting of stamina
+	CurrentStamina = FMath::Clamp(CurrentStamina, 0.f, MaxStamina);
 }
 #pragma endregion
 
@@ -277,7 +277,8 @@ void APlayerCharacter::Kick()
 {
 	if (KickAction && (CurrentStamina - KickCost) > 0.f && !HasKicked)
 	{
-		PlayAnimMontage(KickMontage);
+		CurrentStamina -= KickCost;
+		this->ProcessEvent(KickEvent, nullptr);
 		
 	}
 
