@@ -154,7 +154,7 @@ private:
 
 	// Stamina
 	float				   CurrentStamina		 = MaxStamina;
-	float				   StaminaRecoveryFactor = 5.f;
+	float				   StaminaRecoveryFactor = 3.f;
 	static float constexpr MaxStamina			 = 100.f;
 	static float constexpr CrouchRecovery		 = 10.f;
 	bool				   HasJumped			 = false;
@@ -162,7 +162,7 @@ private:
 	FTimerHandle		   StaminaTimerHandle;
 
 	// Action stamina cost
-	static constexpr float SprintCost	   = 5.f;
+	static constexpr float SprintCost	   = 7.f;
 	static constexpr float JumpCost		   = 25.f;
 	static constexpr float KickCost		   = 30.f;
 	bool HasKicked = false;

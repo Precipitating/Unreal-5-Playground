@@ -89,12 +89,12 @@ void APlayerCharacter::Tick(float DeltaTime)
 	HasJumped = false;
 
 	// Debug
-	GEngine->AddOnScreenDebugMessage(-1, 0.49f, FColor::Silver,
-		*(FString::Printf(
-			TEXT("Movement - IsCrouched:%d | IsSprinting:%d"), bIsCrouched, IsRunning)));
-	GEngine->AddOnScreenDebugMessage(-1, 0.49f, FColor::Green,
-		*(FString::Printf(
-			TEXT("Stamina - Current:%f | Maximum:%f"), CurrentStamina, MaxStamina)));
+	//GEngine->AddOnScreenDebugMessage(-1, 0.49f, FColor::Silver,
+	//	*(FString::Printf(
+	//		TEXT("Movement - IsCrouched:%d | IsSprinting:%d"), bIsCrouched, IsRunning)));
+	//GEngine->AddOnScreenDebugMessage(-1, 0.49f, FColor::Green,
+	//	*(FString::Printf(
+	//		TEXT("Stamina - Current:%f | Maximum:%f"), CurrentStamina, MaxStamina)));
 
 
 
