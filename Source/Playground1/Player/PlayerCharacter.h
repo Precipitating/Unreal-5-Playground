@@ -139,7 +139,7 @@ protected:
 
 private:
 	// Camera
-	UPROPERTY(VisibleDefaultsOnly, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	class UCameraComponent* Camera = nullptr;
 	FVector CameraLocation =		 FVector(0.f, 30.f, 0.f);
 
@@ -151,6 +151,9 @@ private:
 	static constexpr float SprintSpeed = WalkSpeed * 2.f;
 	bool IsRunning = false;
 	bool HasRan = false;
+
+	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	bool CanMove = true;
 
 	// Stamina
 	float				   CurrentStamina		 = MaxStamina;

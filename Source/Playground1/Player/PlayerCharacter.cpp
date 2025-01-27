@@ -206,9 +206,9 @@ void APlayerCharacter::Movement(const FInputActionValue& InputValue)
 {
 	FVector2D InputVector = InputValue.Get<FVector2D>();
 
-	if (IsValid(Controller))
+	if (IsValid(Controller) && CanMove)
 	{
-
+		
 		// Add Movement
 		AddMovementInput(GetActorForwardVector(), InputVector.Y);
 		AddMovementInput(GetActorRightVector(), InputVector.X);
