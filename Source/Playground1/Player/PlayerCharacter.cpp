@@ -149,6 +149,10 @@ void APlayerCharacter::ReduceStamina(float Stamina)
 {
 	CurrentStamina -= Stamina;
 }
+void APlayerCharacter::IncreaseStamina(float Stamina)
+{
+	CurrentStamina += Stamina;
+}
 void APlayerCharacter::SetStaminaRecoveryValue(float Recovery)
 {
 	StaminaRecoveryFactor = Recovery;

@@ -55,6 +55,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Player Stamina")
 	void ReduceStamina(float Stamina);
 
+	UFUNCTION(BlueprintCallable, Category = "Player Stamina")
+	void IncreaseStamina(float Stamina);
 	// Set player's stamina recovery amount.
 	UFUNCTION(BlueprintCallable, Category = "Player Stamina")
 	void SetStaminaRecoveryValue(float Recovery);
