@@ -56,10 +56,8 @@ void APlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
 
-	// Ensure the fuze timer is cleared by using the timer handle
-	GetWorld()->GetTimerManager().ClearTimer(StaminaTimerHandle);
 
-	// Alternatively you can clear ALL timers that belong to this (Actor) instance.
+	GetWorld()->GetTimerManager().ClearTimer(StaminaTimerHandle);
 	GetWorld()->GetTimerManager().ClearAllTimersForObject(this);
 }
 
@@ -67,8 +65,6 @@ void APlayerCharacter::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void APlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	const float PreviousStamina = CurrentStamina;
 
 	if (HasJumped)
 	{
@@ -80,10 +76,6 @@ void APlayerCharacter::Tick(float DeltaTime)
 		CurrentStamina -= SprintCost * DeltaTime;
 	}
 
-	if (CurrentStamina != PreviousStamina)
-	{
-		OnStaminaUpdate.Broadcast(PreviousStamina, CurrentStamina, MaxStamina);
-	}
 
 	HasRan = false;
 	HasJumped = false;
@@ -141,6 +133,10 @@ float APlayerCharacter::GetStamina()
 {
 	return CurrentStamina;
 }
+float APlayerCharacter::GetMaxStamina()
+{
+	return MaxStamina;
+}
 void APlayerCharacter::SetStamina(float Stamina)
 {
 	CurrentStamina = Stamina;
@@ -159,6 +155,8 @@ void APlayerCharacter::SetStaminaRecoveryValue(float Recovery)
 }
 void APlayerCharacter::RegenStamina()
 {
+	const float PreviousStamina = CurrentStamina;
+
 	if (bIsCrouched)
 	{
 		CurrentStamina += CrouchRecovery;
@@ -166,6 +164,11 @@ void APlayerCharacter::RegenStamina()
 	else
 	{
 		CurrentStamina += StaminaRecoveryFactor;
+	}
+
+	if (CurrentStamina != PreviousStamina)
+	{
+		OnStaminaUpdate.Broadcast(PreviousStamina, CurrentStamina, MaxStamina);
 	}
 
 	// Ensure no over/undershooting of stamina

@@ -46,7 +46,8 @@ public:
 	// Return current stamina.
 	UFUNCTION(BlueprintPure, Category = "Player Stamina")
 	float GetStamina();
-
+	UFUNCTION(BlueprintPure, Category = "Player Stamina")
+	float GetMaxStamina();
 	// Set player's stamina.
 	UFUNCTION(BlueprintCallable, Category = "Player Stamina")
 	void SetStamina(float Stamina);
@@ -167,11 +168,11 @@ private:
 	static float constexpr MaxStamina			 = 100.f;
 	static float constexpr CrouchRecovery		 = 10.f;
 	bool				   HasJumped			 = false;
-	float                  StaminaRegenDelay	 = 1.f;
+	float                  StaminaRegenDelay	 = 0.5f;
 	FTimerHandle		   StaminaTimerHandle;
 
 	// Action stamina cost
-	static constexpr float SprintCost	   = 7.f;
+	static constexpr float SprintCost	   = 10.f;
 	static constexpr float JumpCost		   = 25.f;
 	static constexpr float KickCost		   = 30.f;
 	bool HasKicked = false;
